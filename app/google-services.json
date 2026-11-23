@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "359122496743",
+    "project_id": "naukivo",
+    "storage_bucket": "naukivo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:359122496743:android:42bba2e641a591fda78642",
+        "android_client_info": {
+          "package_name": "in.naukivo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrmWtOdszFF59NfglUFNnIZ3_kIR8EcGk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
