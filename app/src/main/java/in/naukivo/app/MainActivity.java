@@ -20,6 +20,7 @@ import java.util.Locale;
 
 /** NauKivo offline-first Android prototype. Data is stored on this device only. */
 public class MainActivity extends Activity {
+    private FirebaseFirestore db;
     private final int navy = Color.rgb(24, 49, 83);
     private final int blue = Color.rgb(35, 105, 190);
     private final int pale = Color.rgb(242, 246, 251);
