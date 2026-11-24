@@ -43,8 +43,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         
-auth = FirebaseAuth.getInstance();
-db = FirebaseFirestore.getInstance();
+
 
         prefs = getSharedPreferences("naukivo_local", MODE_PRIVATE);
         loadData();
