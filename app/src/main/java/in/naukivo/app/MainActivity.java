@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.*;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.auth.FirebaseAuth;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
