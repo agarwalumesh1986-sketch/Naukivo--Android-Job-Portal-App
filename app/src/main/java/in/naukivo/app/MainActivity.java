@@ -52,7 +52,40 @@ public class MainActivity extends Activity {
         showHome();
         loadOnlineJobs();
     }
+private void loadOnlineJobs() {
+    db.collection("jobs")
+        .whereEqualTo("status", "active")
+        .get()
+        .addOnSuccessListener(result -> {
+            for (QueryDocumentSnapshot doc : result) {
+                String id = doc.getId();
 
+                boolean exists = false;
+                for (Job j : jobs) {
+                    if (j.id.equals(id)) {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists) {
+                    jobs.add(new Job(
+                        id,
+                        doc.getString("title"),
+                        doc.getString("company"),
+                        doc.getString("location"),
+                        doc.getString("salary"),
+                        doc.getString("jobType"),
+                        doc.getString("description")
+                    ));
+                }
+            }
+            showHome();
+        })
+        .addOnFailureListener(e ->
+            message("ऑनलाइन नौकरी लोड नहीं हुई: " + e.getMessage())
+        );
+}
     private void loadData() {
         candidateName = prefs.getString("candidate_name", "");
         candidatePhone = prefs.getString("candidate_phone", "");
