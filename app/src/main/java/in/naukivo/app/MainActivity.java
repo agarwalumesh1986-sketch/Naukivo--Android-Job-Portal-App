@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        
+        db = FirebaseFirestore.getInstance();
 
 
         prefs = getSharedPreferences("naukivo_local", MODE_PRIVATE);
