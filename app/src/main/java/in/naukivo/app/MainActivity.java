@@ -50,6 +50,7 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences("naukivo_local", MODE_PRIVATE);
         loadData();
         showHome();
+        loadOnlineJobs();
     }
 
     private void loadData() {
