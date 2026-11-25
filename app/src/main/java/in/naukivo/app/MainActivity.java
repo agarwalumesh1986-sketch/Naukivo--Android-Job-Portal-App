@@ -1,4 +1,4 @@
-Java
+
 package in.naukivo.app;
 
 import android.app.Activity;
