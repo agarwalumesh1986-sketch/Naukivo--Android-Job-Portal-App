@@ -107,9 +107,7 @@ public class MainActivity extends Activity {
                             safe(doc.getString("company")),
                             safe(doc.getString("location")),
                             safe(doc.getString("salary")),
-                            safe(doc.getString("jobType")).isEmpty()
-        ? safe(doc.getString("job_type"))
-        : safe(doc.getString("jobType")),
+                            doc.contains("jobType") ? safe(doc.getString("jobType")) : safe(doc.getString("job_type")),
                             safe(doc.getString("description"))
                         ));
                     }
