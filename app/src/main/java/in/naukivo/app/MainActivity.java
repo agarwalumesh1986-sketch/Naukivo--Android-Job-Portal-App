@@ -1,3 +1,4 @@
+Java
 package in.naukivo.app;
 
 import android.app.Activity;
@@ -597,6 +598,8 @@ public class MainActivity extends Activity {
             String pay = salary.getText().toString().trim();
             if (pay.isEmpty()) pay = "वेतन बातचीत के अनुसार";
 
+            final String finalPay = pay;
+
             String jobType = type.getSelectedItem().toString();
             String description = desc.getText().toString().trim();
 
@@ -604,7 +607,7 @@ public class MainActivity extends Activity {
             data.put("title", t);
             data.put("company", c);
             data.put("location", cityName);
-            data.put("salary", pay);
+            data.put("salary", finalPay);
             data.put("jobType", jobType);
             data.put("description", description);
             data.put("status", "active");
@@ -616,7 +619,7 @@ public class MainActivity extends Activity {
                 .set(data)
                 .addOnSuccessListener(unused -> {
                     jobs.add(0, new Job(
-                        id, t, c, cityName, pay, jobType, description
+                        id, t, c, cityName, finalPay, jobType, description
                     ));
 
                     saveJobs();
