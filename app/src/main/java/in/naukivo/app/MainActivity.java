@@ -2,6 +2,7 @@
 package in.naukivo.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -47,7 +48,7 @@ public class MainActivity extends Activity {
     private String candidateSkills = "";
 
     static class Job {
-        String id, title, company, city, salary, type, description;
+        String id, title, company, city, salary, type, description, employerUid;
 
         Job(String id, String title, String company, String city,
             String salary, String type, String description) {
@@ -58,6 +59,7 @@ public class MainActivity extends Activity {
             this.salary = salary;
             this.type = type;
             this.description = description;
+            this.employerUid = "";
         }
     }
 
@@ -101,7 +103,7 @@ public class MainActivity extends Activity {
                     }
 
                     if (!exists) {
-                        jobs.add(new Job(
+                        Job onlineJob = new Job(
                             id,
                             safe(doc.getString("title")),
                             safe(doc.getString("company")),
@@ -109,7 +111,9 @@ public class MainActivity extends Activity {
                             safe(doc.getString("salary")),
                             doc.contains("jobType") ? safe(doc.getString("jobType")) : safe(doc.getString("job_type")),
                             safe(doc.getString("description"))
-                        ));
+                        );
+                        onlineJob.employerUid = safe(doc.getString("employerUid"));
+                        jobs.add(onlineJob);
                     }
                 }
                 showHome();
@@ -135,7 +139,7 @@ public class MainActivity extends Activity {
 
             for (int i = 0; i < saved.length(); i++) {
                 JSONObject o = saved.getJSONObject(i);
-                jobs.add(new Job(
+                Job savedJob = new Job(
                     o.optString("id"),
                     o.optString("title"),
                     o.optString("company"),
@@ -143,7 +147,9 @@ public class MainActivity extends Activity {
                     o.optString("salary"),
                     o.optString("type"),
                     o.optString("description")
-                ));
+                );
+                savedJob.employerUid = o.optString("employerUid", "");
+                jobs.add(savedJob);
             }
 
             JSONArray apps = new JSONArray(
@@ -197,6 +203,7 @@ public class MainActivity extends Activity {
                 o.put("salary", j.salary);
                 o.put("type", j.type);
                 o.put("description", j.description);
+                o.put("employerUid", j.employerUid);
                 a.put(o);
             }
         } catch (Exception ignored) {}
@@ -457,6 +464,11 @@ public class MainActivity extends Activity {
     }
 
     private void applyFor(Job j) {
+        if (j.id.startsWith("sample")) {
+            message("यह डेमो नौकरी है। ऑनलाइन नौकरी चुनकर आवेदन करें।");
+            return;
+        }
+
         if (candidateName.trim().isEmpty()
             || candidatePhone.trim().length() < 10) {
             message("पहले प्रोफाइल में नाम और मोबाइल नंबर सेव करें।");
@@ -475,13 +487,33 @@ public class MainActivity extends Activity {
             return;
         }
 
+        CheckBox sharePhone = new CheckBox(this);
+        sharePhone.setText("मेरा मोबाइल नंबर नियोक्ता को दें");
+        sharePhone.setChecked(false);
+
+        new AlertDialog.Builder(this)
+            .setTitle("आवेदन भेजने की पुष्टि")
+            .setMessage("आपका नाम और कौशल नौकरी पोस्ट करने वाले नियोक्ता को भेजे जाएंगे। मोबाइल नंबर वैकल्पिक है।")
+            .setView(sharePhone)
+            .setNegativeButton("रद्द करें", (dialog, which) -> dialog.dismiss())
+            .setPositiveButton("आवेदन भेजें", (dialog, which) ->
+                submitApplication(j, sharePhone.isChecked()))
+            .show();
+    }
+
+    private void submitApplication(Job j, boolean sharePhone) {
         String uid = auth.getCurrentUser().getUid();
 
         Map<String, Object> data = new HashMap<>();
         data.put("jobId", j.id);
+        data.put("jobTitle", j.title);
+        data.put("company", j.company);
+        data.put("employerUid", j.employerUid);
         data.put("applicantUid", uid);
         data.put("applicantName", candidateName);
         data.put("applicantSkills", candidateSkills);
+        data.put("phoneShared", sharePhone);
+        if (sharePhone) data.put("applicantPhone", candidatePhone);
         data.put("createdAt", System.currentTimeMillis());
 
         db.collection("applications")
@@ -546,6 +578,8 @@ public class MainActivity extends Activity {
 
     private void showEmployer() {
         base("नियोक्ता क्षेत्र", "अपने व्यवसाय के लिए नौकरी पोस्ट करें");
+
+        actionButton("मेरे नौकरी आवेदक देखें", () -> showEmployerApplications());
 
         content.addView(text("नौकरी का पद", 14, navy, true));
         EditText title = field("जैसे: Accountant");
@@ -636,6 +670,55 @@ public class MainActivity extends Activity {
             "पोस्ट करने के लिए Firebase Login और इंटरनेट जरूरी है।",
             12, Color.GRAY, false
         ));
+    }
+
+    private void showEmployerApplications() {
+        base("मेरे नौकरी आवेदक", "आपकी पोस्ट की गई नौकरियों पर आए आवेदन");
+
+        if (auth.getCurrentUser() == null) {
+            content.addView(text("Firebase Login नहीं हुआ। इंटरनेट चेक करें।", 14, Color.DKGRAY, false));
+            return;
+        }
+
+        String uid = auth.getCurrentUser().getUid();
+        content.addView(text("आवेदक सूची लोड हो रही है...", 14, Color.GRAY, false));
+
+        db.collection("applications")
+            .whereEqualTo("employerUid", uid)
+            .get()
+            .addOnSuccessListener(result -> {
+                content.removeAllViews();
+
+                if (result.isEmpty()) {
+                    content.addView(text("अभी आपकी नौकरी पर कोई आवेदन नहीं आया है।", 15, Color.DKGRAY, false));
+                    return;
+                }
+
+                for (QueryDocumentSnapshot doc : result) {
+                    LinearLayout card = vertical();
+                    card.setPadding(14, 12, 14, 12);
+                    card.setBackground(bg(Color.WHITE, 14));
+
+                    card.addView(text(safe(doc.getString("jobTitle")), 17, navy, true));
+                    card.addView(text(safe(doc.getString("company")), 13, Color.DKGRAY, false));
+                    card.addView(text("आवेदक: " + safe(doc.getString("applicantName")), 15, navy, true));
+                    card.addView(text("कौशल: " + safe(doc.getString("applicantSkills")), 13, Color.DKGRAY, false));
+
+                    if (Boolean.TRUE.equals(doc.getBoolean("phoneShared"))) {
+                        card.addView(text("मोबाइल: " + safe(doc.getString("applicantPhone")), 14, green, true));
+                    } else {
+                        card.addView(text("मोबाइल नंबर साझा नहीं किया गया।", 12, Color.GRAY, false));
+                    }
+
+                    LinearLayout.LayoutParams cp = lp(-1, -2);
+                    cp.bottomMargin = 12;
+                    content.addView(card, cp);
+                }
+            })
+            .addOnFailureListener(e -> {
+                content.removeAllViews();
+                content.addView(text("आवेदक सूची नहीं खुल सकी। Firebase Rules में employerUid के आधार पर applications पढ़ने की अनुमति जरूरी है।", 14, Color.DKGRAY, false));
+            });
     }
 
     private void showApplications() {
