@@ -95,9 +95,11 @@ public class MainActivity extends Activity {
                     String id = doc.getId();
 
                     boolean exists = false;
+                    Job existingJob = null;
                     for (Job j : jobs) {
                         if (j.id.equals(id)) {
                             exists = true;
+                            existingJob = j;
                             break;
                         }
                     }
@@ -114,6 +116,9 @@ public class MainActivity extends Activity {
                         );
                         onlineJob.employerUid = safe(doc.getString("employerUid"));
                         jobs.add(onlineJob);
+                    } else if (existingJob != null) {
+                        // Refresh ownership from Firestore so locally saved jobs can submit applications correctly.
+                        existingJob.employerUid = safe(doc.getString("employerUid"));
                     }
                 }
                 showHome();
@@ -652,9 +657,11 @@ public class MainActivity extends Activity {
                 .document(id)
                 .set(data)
                 .addOnSuccessListener(unused -> {
-                    jobs.add(0, new Job(
+                    Job postedJob = new Job(
                         id, t, c, cityName, finalPay, jobType, description
-                    ));
+                    );
+                    postedJob.employerUid = uid;
+                    jobs.add(0, postedJob);
 
                     saveJobs();
                     message("नौकरी ऑनलाइन पोस्ट हो गई!");
